@@ -5,5 +5,6 @@
 
 namespace RESP {
     std::vector<std::string> parse(const std::string &input);
+
     std::string encode(const std::string &response);
-} // namespace RESP
+}

@@ -19,6 +19,6 @@ private:
     int server_socket;
     std::atomic<bool> running;
 
-    CommandHandler commandHandler;
     DataBase db;
+    CommandHandler commandHandler;
 };

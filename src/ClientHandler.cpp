@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include "../include/RESPParser.hpp"
-using namespace RESP;
 
 ClientHandler::ClientHandler(int fd, CommandHandler &commandHandler)
     : client_fd(fd), commandHandler(commandHandler) {}
