@@ -14,6 +14,54 @@ bool DataBase::isExpired(const std::string &key) {
     return false;
 }
 
+void DataBase::purgeExpired() {
+    auto now = std::chrono::steady_clock::now();
+    for (auto it = expiry.begin(); it != expiry.end();) {
+        if (now >= it->second) {
+            strings.erase(it->first);
+            lists.erase(it->first);
+            hashes.erase(it->first);
+            it = expiry.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+bool DataBase::rename(const std::string &oldKey, const std::string &newKey) {
+    std::lock_guard<std::mutex> lock(mtx);
+    bool found = false;
+
+    auto it = strings.find(oldKey);
+    if (it != strings.end()) {
+        strings[newKey] = std::move(it->second);
+        strings.erase(it);
+        found = true;
+    }
+
+    auto il = lists.find(oldKey);
+    if (il != lists.end()) {
+        lists[newKey] = std::move(il->second);
+        lists.erase(il);
+        found = true;
+    }
+
+    auto ih = hashes.find(oldKey);
+    if (ih != hashes.end()) {
+        hashes[newKey] = std::move(ih->second);
+        hashes.erase(ih);
+        found = true;
+    }
+
+    auto ie = expiry.find(oldKey);
+    if (ie != expiry.end()) {
+        expiry[newKey] = ie->second;
+        expiry.erase(ie);
+    }
+
+    return found;
+}
+
 // ─── string operations ────────────────────────────────────────────
 
 void DataBase::set(const std::string &key, const std::string &value) {
@@ -89,11 +137,147 @@ void DataBase::flushAll() {
     expiry.clear();
 }
 
+// ─── list operations ──────────────────────────────────────────────
+
+std::vector<std::string> DataBase::lget(const std::string &key) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = lists.find(key);
+    if (it == lists.end()) return {};
+    return std::vector<std::string>(it->second.begin(), it->second.end());
+}
+
+ssize_t DataBase::llen(const std::string &key) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = lists.find(key);
+    return it != lists.end() ? (ssize_t)it->second.size() : 0;
+}
+
+int DataBase::lrem(const std::string &key, int count, const std::string &value) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = lists.find(key);
+    if (it == lists.end()) return 0;
+
+    auto &lst = it->second;
+    int removed = 0;
+
+    if (count == 0) {
+        // remove all occurrences
+        for (auto i = lst.begin(); i != lst.end();) {
+            if (*i == value) {
+                i = lst.erase(i);
+                removed++;
+            } else
+                ++i;
+        }
+    } else if (count > 0) {
+        // remove from head
+        for (auto i = lst.begin(); i != lst.end() && removed < count;) {
+            if (*i == value) {
+                i = lst.erase(i);
+                removed++;
+            } else
+                ++i;
+        }
+    } else {
+        // remove from tail
+        for (auto i = lst.rbegin(); i != lst.rend() && removed < -count;) {
+            if (*i == value) {
+                i = std::reverse_iterator<std::deque<std::string>::iterator>(
+                    lst.erase(std::next(i).base()));
+                removed++;
+            } else
+                ++i;
+        }
+    }
+    return removed;
+}
+
+bool DataBase::lindex(const std::string &key, int index, std::string &out) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = lists.find(key);
+    if (it == lists.end()) return false;
+
+    auto &lst = it->second;
+    if (index < 0) index = (int)lst.size() + index;
+    if (index < 0 || index >= (int)lst.size()) return false;
+
+    out = lst[index];
+    return true;
+}
+
+bool DataBase::lset(const std::string &key, int index, const std::string &value) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = lists.find(key);
+    if (it == lists.end()) return false;
+
+    auto &lst = it->second;
+    if (index < 0) index = (int)lst.size() + index;
+    if (index < 0 || index >= (int)lst.size()) return false;
+
+    lst[index] = value;
+    return true;
+}
+
+// ─── hash operations ──────────────────────────────────────────────
+
+bool DataBase::hexists(const std::string &key, const std::string &field) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = hashes.find(key);
+    if (it == hashes.end()) return false;
+    return it->second.count(field) > 0;
+}
+
+bool DataBase::hdel(const std::string &key, const std::string &field) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = hashes.find(key);
+    if (it == hashes.end()) return false;
+    return it->second.erase(field) > 0;
+}
+
+std::unordered_map<std::string, std::string> DataBase::hgetall(const std::string &key) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = hashes.find(key);
+    if (it == hashes.end()) return {};
+    return it->second;
+}
+
+std::vector<std::string> DataBase::hkeys(const std::string &key) {
+    std::lock_guard<std::mutex> lock(mtx);
+    std::vector<std::string> result;
+    auto it = hashes.find(key);
+    if (it != hashes.end())
+        for (auto &[f, v] : it->second)
+            result.push_back(f);
+    return result;
+}
+
+std::vector<std::string> DataBase::hvals(const std::string &key) {
+    std::lock_guard<std::mutex> lock(mtx);
+    std::vector<std::string> result;
+    auto it = hashes.find(key);
+    if (it != hashes.end())
+        for (auto &[f, v] : it->second)
+            result.push_back(v);
+    return result;
+}
+
+ssize_t DataBase::hlen(const std::string &key) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = hashes.find(key);
+    return it != hashes.end() ? (ssize_t)it->second.size() : 0;
+}
+
+void DataBase::hmset(const std::string &key, const std::vector<std::pair<std::string, std::string>> &fieldValues) {
+    std::lock_guard<std::mutex> lock(mtx);
+    for (auto &[field, value] : fieldValues)
+        hashes[key][field] = value;
+}
+
 // ─── persistence ──────────────────────────────────────────────────
 
 bool DataBase::dump(const std::string &filename) {
     std::lock_guard<std::mutex> lock(mtx);
-    std::ofstream file(filename, std::ios::binary);
+    std::ofstream file(filename);
     if (!file.is_open()) return false;
 
     for (auto &[key, value] : strings)
