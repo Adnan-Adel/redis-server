@@ -3,8 +3,18 @@
 #include <string>
 #include <vector>
 
-namespace RESP {
-    std::vector<std::string> parse(const std::string &input);
-    std::pair<std::vector<std::string>, size_t> tryParse(const std::string &buffer);
-    std::string encode(const std::string &response);
-}
+class RESPParser {
+public:
+    void feed(const char *data, size_t len);
+    std::vector<std::string> tryParse();
+
+    static std::string encodeSimple(const std::string &str);
+    static std::string encodeError(const std::string &err);
+    static std::string encodeBulk(const std::string &str);
+    static std::string encodeNull();
+    static std::string encodeInteger(int n);
+    static std::string encodeArray(const std::vector<std::string> &items);
+
+private:
+    std::string buffer;
+};

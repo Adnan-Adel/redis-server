@@ -2,6 +2,7 @@
 
 #include <string>
 #include "CommandHandler.hpp"
+#include "../include/RESPParser.hpp"
 
 class ClientHandler {
 public:
@@ -13,7 +14,7 @@ private:
     bool readIntoBuffer();
     void sendResponse(const std::string &response);
 
-    int client_fd;
+    int client_socket;
     CommandHandler &commandHandler;
-    std::string buffer;
+    RESPParser parser;
 };
