@@ -11,10 +11,12 @@ public:
     ~RedisServer();
     void run();
     void shutdown();
+    void dumpDatabase();
 
 private:
     void setup();
     void acceptLoop();
+    void setupSignalHandler();
 
     int port;
     int server_socket;

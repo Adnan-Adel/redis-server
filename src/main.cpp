@@ -10,9 +10,10 @@ int main(int argc, char *argv[]) {
     RedisServer server(port);
 
     // Background persistence: dump database every 300 seconds.
-    std::thread persistanceThread([]() {
+    std::thread persistanceThread([&server]() {
         std::this_thread::sleep_for(std::chrono::seconds(300));
         // dump database
+        server.dumpDatabase();
     });
     persistanceThread.detach();
 

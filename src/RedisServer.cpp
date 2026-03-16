@@ -7,12 +7,21 @@
 #include <thread>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <signal.h>
 
 static RedisServer *globalServer = nullptr;
 
-static void handleSignal(int) {
-    if (globalServer)
+void signalHandler(int signum) {
+    if (globalServer) {
+        std::cout << "Caught signal " << signum << ", shutting down...\n";
         globalServer->shutdown();
+    }
+    exit(signum);
+}
+
+void RedisServer::setupSignalHandler() {
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
 }
 
 RedisServer::RedisServer(int port)
@@ -22,8 +31,7 @@ RedisServer::RedisServer(int port)
     , commandHandler(db)
     , threadPool(std::thread::hardware_concurrency()) {
     globalServer = this;
-    std::signal(SIGINT, handleSignal);
-    std::signal(SIGTERM, handleSignal);
+    setupSignalHandler();
 }
 
 RedisServer::~RedisServer() {
@@ -76,6 +84,13 @@ void RedisServer::acceptLoop() {
     }
 }
 
+void RedisServer::dumpDatabase() {
+    if (db.dump("dumped.db"))
+        std::cout << "Database dumped.\n";
+    else
+        std::cerr << "Error dumping database.\n";
+}
+
 void RedisServer::run() {
     try {
         setup();
@@ -85,6 +100,9 @@ void RedisServer::run() {
     }
     running = true;
     acceptLoop();
+
+    // persist db
+    dumpDatabase();
 }
 
 void RedisServer::shutdown() {

@@ -16,6 +16,13 @@ std::string CommandHandler::execute(const std::vector<std::string> &args) {
     // connect to db
 
     // check commands
+    if (cmd == "PING") {
+        response << "+PONG\r\n";
+    } else if (cmd == "ECHO") {
+
+    } else {
+        response << "-Error: Unknown command\r\n";
+    }
 
     return response.str();
 }
