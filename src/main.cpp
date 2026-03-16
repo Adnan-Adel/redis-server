@@ -3,7 +3,7 @@
 #include <chrono>
 
 int main(int argc, char *argv[]) {
-    int port = 6379;
+    int port = 6666;
     if (argc >= 2)
         port = std::stoi(argv[1]);
 

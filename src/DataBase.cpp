@@ -93,7 +93,7 @@ void DataBase::flushAll() {
 
 bool DataBase::dump(const std::string &filename) {
     std::lock_guard<std::mutex> lock(mtx);
-    std::ofstream file(filename);
+    std::ofstream file(filename, std::ios::binary);
     if (!file.is_open()) return false;
 
     for (auto &[key, value] : strings)
@@ -114,6 +114,10 @@ bool DataBase::load(const std::string &filename) {
     std::lock_guard<std::mutex> lock(mtx);
     std::ifstream file(filename);
     if (!file.is_open()) return false;
+
+    strings.clear();
+    lists.clear();
+    hashes.clear();
 
     std::string line;
     while (std::getline(file, line)) {
