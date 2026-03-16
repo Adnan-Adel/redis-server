@@ -1,4 +1,3 @@
-#include <iostream>
 #include "../include/RedisServer.hpp"
 #include <thread>
 #include <chrono>

@@ -5,18 +5,25 @@
 #include "../include/RESPParser.hpp"
 
 ClientHandler::ClientHandler(int fd, CommandHandler &commandHandler)
-    : client_fd(fd), commandHandler(commandHandler) {}
+    : client_fd(fd)
+    , commandHandler(commandHandler) {}
 
 void ClientHandler::handle() {
     std::cout << "Client connected: fd=" << client_fd << "\n";
 
     while (true) {
-        std::string line = readLine();
-        if (line.empty()) break;
+        if (!readIntoBuffer()) break;
 
-        std::vector<std::string> args = RESP::parse(line);
-        std::string response = commandHandler.execute(args);
-        sendResponse(response);
+        while (true) {
+            auto [args, consumed] = RESP::tryParse(buffer);
+            if (consumed == 0) break;
+
+            buffer.erase(0, consumed);
+
+            if (args.empty()) continue;
+            std::string response = commandHandler.execute(args);
+            sendResponse(response);
+        }
     }
 
     close(client_fd);
@@ -33,6 +40,19 @@ std::string ClientHandler::readLine() {
     return result;
 }
 
+bool ClientHandler::readIntoBuffer() {
+    char tmp[4096];
+    ssize_t bytes = recv(client_fd, tmp, sizeof(tmp), 0);
+    if (bytes <= 0) return false;
+    buffer.append(tmp, bytes);
+    return true;
+}
+
 void ClientHandler::sendResponse(const std::string &response) {
-    send(client_fd, response.c_str(), response.size(), 0);
+    size_t total = 0;
+    while (total < response.size()) {
+        ssize_t sent = send(client_fd, response.c_str() + total, response.size() - total, 0);
+        if (sent <= 0) break;
+        total += sent;
+    }
 }

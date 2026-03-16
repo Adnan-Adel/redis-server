@@ -1,6 +1,7 @@
 #include "../include/RedisServer.hpp"
 #include "../include/ClientHandler.hpp"
 #include <csignal>
+#include <cstring>
 #include <iostream>
 #include <sys/socket.h>
 #include <thread>
@@ -15,7 +16,11 @@ static void handleSignal(int) {
 }
 
 RedisServer::RedisServer(int port)
-    : port(port), server_socket(-1), running(false), commandHandler(db) {
+    : port(port)
+    , server_socket(-1)
+    , running(false)
+    , commandHandler(db)
+    , threadPool(std::thread::hardware_concurrency()) {
     globalServer = this;
     std::signal(SIGINT, handleSignal);
     std::signal(SIGTERM, handleSignal);
@@ -29,13 +34,11 @@ RedisServer::~RedisServer() {
 void RedisServer::setup() {
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket < 0) {
-        std::cerr << "Failed to create socket.\n";
-        return;
+        throw std::runtime_error("Failed to create socket.");
     }
     int opt = 1;
     if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        std::cerr << "Failed to set socket option.\n";
-        return;
+        throw std::runtime_error("Failed to set socket options.");
     }
 
     sockaddr_in serverAddr{};
@@ -44,13 +47,11 @@ void RedisServer::setup() {
     serverAddr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(server_socket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
-        std::cerr << "Failed to bind socket.\n";
-        return;
+        throw std::runtime_error("Failed to bind on port " + std::to_string(port) + " — already in use.");
     }
 
     if (listen(server_socket, 10) < 0) {
-        std::cerr << "Failed to listen on socket.\n";
-        return;
+        throw std::runtime_error("Failed to listen on socket.");
     }
 
     std::cout << "Redis server listening on port " << port << "\n";
@@ -61,23 +62,27 @@ void RedisServer::acceptLoop() {
         sockaddr_in clientAddr{};
         socklen_t clientLen = sizeof(clientAddr);
 
-        int client_fd = accept(server_socket, (struct sockaddr *)&clientAddr, &clientLen);
-        if (client_fd < 0) {
+        int client_socket = accept(server_socket, (struct sockaddr *)&clientAddr, &clientLen);
+        if (client_socket < 0) {
             if (!running) break;
-            std::cerr << "Failed to accept connection\n";
+            std::cerr << "Failed to accept connection.\n";
             continue;
         }
 
-        // detach so we don't have to join — client owns its lifetime
-        std::thread([this, client_fd]() {
-            ClientHandler handler(client_fd, commandHandler);
+        threadPool.enqueue([this, client_socket]() {
+            ClientHandler handler(client_socket, commandHandler);
             handler.handle();
-        }).detach();
+        });
     }
 }
 
 void RedisServer::run() {
-    setup();
+    try {
+        setup();
+    } catch (const std::exception &e) {
+        std::cerr << "Server failed to start: " << e.what() << "\n";
+        return;
+    }
     running = true;
     acceptLoop();
 }

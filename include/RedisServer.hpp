@@ -3,6 +3,7 @@
 #include <atomic>
 #include "CommandHandler.hpp"
 #include "DataBase.hpp"
+#include "ThreadPool.hpp"
 
 class RedisServer {
 public:
@@ -21,4 +22,5 @@ private:
 
     DataBase db;
     CommandHandler commandHandler;
+    ThreadPool threadPool;
 };

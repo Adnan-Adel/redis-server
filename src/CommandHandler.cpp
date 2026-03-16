@@ -2,6 +2,9 @@
 #include <algorithm>
 #include <sstream>
 
+CommandHandler::CommandHandler(DataBase &db)
+    : db(db) {}
+
 std::string CommandHandler::execute(const std::vector<std::string> &args) {
     if (args.empty())
         return "-ERR empty command\r\n";
