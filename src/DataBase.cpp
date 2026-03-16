@@ -218,6 +218,36 @@ bool DataBase::lset(const std::string &key, int index, const std::string &value)
     return true;
 }
 
+void DataBase::lpush(const std::string &key, const std::string &value) {
+    std::lock_guard<std::mutex> lock(mtx);
+    lists[key].push_front(value);
+}
+
+void DataBase::rpush(const std::string &key, const std::string &value) {
+    std::lock_guard<std::mutex> lock(mtx);
+    lists[key].push_back(value);
+}
+
+bool DataBase::lpop(const std::string &key, std::string &out) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = lists.find(key);
+    if (it == lists.end() || it->second.empty()) return false;
+    out = it->second.front();
+    it->second.pop_front();
+    if (it->second.empty()) lists.erase(it);
+    return true;
+}
+
+bool DataBase::rpop(const std::string &key, std::string &out) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = lists.find(key);
+    if (it == lists.end() || it->second.empty()) return false;
+    out = it->second.back();
+    it->second.pop_back();
+    if (it->second.empty()) lists.erase(it);
+    return true;
+}
+
 // ─── hash operations ──────────────────────────────────────────────
 
 bool DataBase::hexists(const std::string &key, const std::string &field) {
@@ -271,6 +301,21 @@ void DataBase::hmset(const std::string &key, const std::vector<std::pair<std::st
     std::lock_guard<std::mutex> lock(mtx);
     for (auto &[field, value] : fieldValues)
         hashes[key][field] = value;
+}
+
+void DataBase::hset(const std::string &key, const std::string &field, const std::string &value) {
+    std::lock_guard<std::mutex> lock(mtx);
+    hashes[key][field] = value;
+}
+
+bool DataBase::hget(const std::string &key, const std::string &field, std::string &out) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = hashes.find(key);
+    if (it == hashes.end()) return false;
+    auto fi = it->second.find(field);
+    if (fi == it->second.end()) return false;
+    out = fi->second;
+    return true;
 }
 
 // ─── persistence ──────────────────────────────────────────────────
