@@ -185,20 +185,6 @@ Results: 87 passed, 0 failed
 
 ---
 
-## Design Decisions
-
-**Thread pool over thread-per-client** — spawning one thread per connection is simple but doesn't scale. A fixed pool of N workers (where N = CPU cores) bounds memory usage and avoids context switching storms under high connection counts.
-
-**`deque` for lists** — `std::deque` gives O(1) `push_front` and `push_back`, making `LPUSH`/`RPUSH`/`LPOP`/`RPOP` all constant time. A `vector` would make `LPUSH` O(n).
-
-**Lazy expiration** — expired keys are evicted on read rather than by a background timer. Simple to implement, correct, and avoids an extra thread. The tradeoff is that expired keys consume memory until accessed.
-
-**Dependency injection over singleton** — `DataBase` is owned by `RedisServer` and passed by reference to `CommandHandler`. No global state, no `getInstance()`. Every dependency is explicit and testable.
-
-**`RESPParser` as a stateful class** — the parser holds an internal byte buffer because TCP is a stream. A single `recv()` may return a partial message or multiple messages. The buffer accumulates bytes across calls and `tryParse()` extracts complete messages when available.
-
----
-
 ## Persistence Format
 
 The database is saved to `dumped.db` on shutdown and loaded on startup. Simple text format, one record per line:
