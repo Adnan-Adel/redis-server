@@ -208,19 +208,3 @@ S key value
 L listkey item
 H hashkey field value
 ```
-
----
-
-## What's Next
-
-- `LRANGE key start stop` — standard Redis list range command
-- `INCR` / `DECR` / `INCRBY` — integer increment commands  
-- `TTL` / `PEXPIRE` / `PTTL` — millisecond TTL precision
-- `APPEND key value` — append to string
-- Background persistence thread — periodic dump every N seconds
-
----
-
-## License
-
-MIT
