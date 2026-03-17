@@ -10,84 +10,78 @@
 
   <!-- ── Client (outside server) ── -->
   <rect x="254" y="12" width="172" height="36" rx="8" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
-  <text x="340" y="26" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="10" font-weight="600" fill="#8b949e">redis-cli</text>
-  <text x="340" y="40" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" fill="#484f58">any Redis client</text>
+  <text x="340" y="27" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="10" font-weight="600" fill="#8b949e">redis-cli</text>
+  <text x="340" y="41" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" fill="#484f58">any Redis client</text>
 
-  <!-- Client down arrow -->
-  <line x1="340" y1="48" x2="340" y2="68" stroke="#555570" stroke-width="1.2" marker-end="url(#arr)"/>
-  <text x="350" y="62" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#3a3a50">TCP connect</text>
+  <!-- Client → server arrow -->
+  <line x1="340" y1="48" x2="340" y2="66" stroke="#555570" stroke-width="1.2" marker-end="url(#arr)"/>
+  <text x="350" y="61" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#3a3a50">TCP connect</text>
 
   <!-- ── RedisServer outer box ── -->
-  <rect x="20" y="68" width="640" height="360" rx="12" fill="#0d1117" stroke="#21262d" stroke-width="1.5"/>
-  <rect x="20" y="68" width="640" height="32" rx="12" fill="#161b22"/>
-  <rect x="20" y="86" width="640" height="14" fill="#161b22"/>
-  <circle cx="40" cy="84" r="5" fill="#ff5f57"/>
-  <circle cx="56" cy="84" r="5" fill="#febc2e"/>
-  <circle cx="72" cy="84" r="5" fill="#28c840"/>
-  <text x="340" y="89" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="11" font-weight="600" fill="#a78bfa">RedisServer</text>
-  <text x="340" y="103" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" fill="#484f58">socket · bind · listen · accept loop · SIGINT/SIGTERM handler</text>
+  <rect x="20" y="66" width="640" height="368" rx="12" fill="#0d1117" stroke="#21262d" stroke-width="1.5"/>
+  <!-- label at top of box, no fake title bar -->
+  <text x="340" y="86" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="12" font-weight="700" fill="#a78bfa">RedisServer</text>
+  <text x="340" y="101" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" fill="#484f58">socket · bind · listen · accept loop · SIGINT/SIGTERM · dumpDatabase()</text>
 
   <!-- accept arrow down -->
-  <line x1="340" y1="108" x2="340" y2="124" stroke="#555570" stroke-width="1.2" marker-end="url(#arr)"/>
-  <text x="350" y="120" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#3a3a50">accept() → enqueue(fd)</text>
+  <line x1="340" y1="106" x2="340" y2="122" stroke="#555570" stroke-width="1.2" marker-end="url(#arr)"/>
+  <text x="350" y="118" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#3a3a50">accept() → enqueue(fd)</text>
 
-  <!-- ── ThreadPool dashed — ONLY wraps ClientHandler ── -->
-  <rect x="168" y="124" width="344" height="130" rx="8" fill="#080810" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="6 3"/>
-  <text x="184" y="140" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" fill="#2a2a4a">ThreadPool  ·  one ClientHandler per queued connection</text>
+  <!-- ── ThreadPool dashed boundary — ONLY wraps ClientHandler ── -->
+  <rect x="36" y="120" width="390" height="140" rx="8" fill="#080810" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="6 3"/>
+  <text x="52" y="136" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" fill="#2a2a4a">ThreadPool  ·  spawns one ClientHandler task per accepted connection</text>
 
-  <!-- ── ClientHandler (inside thread pool) ── -->
-  <rect x="188" y="148" width="304" height="90" rx="8" fill="#0d2149" stroke="#1f6feb" stroke-width="1"/>
-  <text x="340" y="170" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="12" font-weight="600" fill="#58a6ff">ClientHandler</text>
-  <text x="340" y="187" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" fill="#1f6feb">owns fd  ·  recv() loop  ·  sendResponse()</text>
-  <!-- RESPParser as owned member badge inside -->
-  <rect x="206" y="198" width="150" height="18" rx="4" fill="#1a0d38" stroke="#7c3aed" stroke-width="0.8"/>
-  <text x="281" y="211" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#a78bfa">RESPParser  (member)</text>
-  <text x="370" y="211" font-family="ui-monospace,SFMono-Regular,monospace" font-size="7" fill="#484f58">feed() · tryParse()</text>
+  <!-- ── ClientHandler (inside ThreadPool) ── -->
+  <rect x="56" y="144" width="356" height="100" rx="8" fill="#0d2149" stroke="#1f6feb" stroke-width="1"/>
+  <text x="234" y="166" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="12" font-weight="600" fill="#58a6ff">ClientHandler</text>
+  <text x="234" y="183" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" fill="#1f6feb">owns fd · recv() loop · sendResponse()</text>
+  <!-- RESPParser member badge -->
+  <rect x="74" y="194" width="160" height="18" rx="4" fill="#1a0d38" stroke="#7c3aed" stroke-width="0.8"/>
+  <text x="154" y="207" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#a78bfa">RESPParser  (member)</text>
+  <text x="250" y="207" font-family="ui-monospace,SFMono-Regular,monospace" font-size="7" fill="#484f58">feed() · tryParse() · owns buffer</text>
 
-  <!-- ClientHandler → CommandHandler ref arrow (goes right, outside pool) -->
-  <line x1="492" y1="193" x2="556" y2="193" stroke="#555570" stroke-width="1.2" marker-end="url(#arr)"/>
-  <text x="520" y="186" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#3a3a50">ref&amp;</text>
+  <!-- ClientHandler → CommandHandler -->
+  <line x1="412" y1="191" x2="468" y2="191" stroke="#555570" stroke-width="1.2" marker-end="url(#arr)"/>
+  <text x="440" y="184" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#3a3a50">ref&amp;</text>
 
-  <!-- ── CommandHandler (shared — right side, outside thread pool) ── -->
-  <rect x="556" y="158" width="90" height="78" rx="8" fill="#0a2218" stroke="#238636" stroke-width="1"/>
-  <text x="601" y="182" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="10" font-weight="600" fill="#3fb950">Command</text>
-  <text x="601" y="197" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="10" font-weight="600" fill="#3fb950">Handler</text>
-  <text x="601" y="214" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="7" fill="#238636">1 total</text>
-  <text x="601" y="226" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="7" fill="#238636">shared ref</text>
-
-  <!-- shared label under CommandHandler -->
-  <text x="601" y="248" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="7" fill="#2a2a4a">owned by RedisServer</text>
+  <!-- ── CommandHandler (outside ThreadPool, inside RedisServer) ── -->
+  <rect x="470" y="144" width="168" height="114" rx="8" fill="#0a2218" stroke="#238636" stroke-width="1"/>
+  <text x="554" y="166" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="11" font-weight="600" fill="#3fb950">CommandHandler</text>
+  <text x="554" y="182" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#238636">execute(args) → RESP string</text>
+  <text x="554" y="196" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#238636">dispatch · validate · encode</text>
+  <line x1="486" y1="205" x2="622" y2="205" stroke="#1a3a20" stroke-width="0.5"/>
+  <text x="554" y="218" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="7" fill="#2a4a2a">1 total · owned by RedisServer</text>
+  <text x="554" y="231" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="7" fill="#2a4a2a">holds DataBase&amp; · shared ref</text>
+  <text x="554" y="244" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="7" fill="#2a4a2a">shared across all clients</text>
 
   <!-- CommandHandler → DataBase -->
-  <line x1="601" y1="236" x2="500" y2="300" stroke="#555570" stroke-width="1.2" marker-end="url(#arr)"/>
-  <text x="572" y="278" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#3a3a50">db.set/get()</text>
+  <line x1="554" y1="258" x2="390" y2="310" stroke="#555570" stroke-width="1.2" marker-end="url(#arr)"/>
+  <text x="506" y="293" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#3a3a50">db.set/get()</text>
 
-  <!-- ClientHandler bottom → DataBase (indirect via commandHandler) -->
-  <line x1="340" y1="238" x2="340" y2="300" stroke="#3a3a50" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrd)"/>
-
-  <!-- ── DataBase (shared, owned by RedisServer) ── -->
-  <rect x="80" y="300" width="440" height="68" rx="8" fill="#271700" stroke="#d29922" stroke-width="1.5"/>
-  <text x="300" y="324" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="12" font-weight="600" fill="#e3b341">DataBase</text>
-  <text x="300" y="341" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" fill="#d29922">strings · lists · hashes · expiry  ·  std::mutex</text>
-  <text x="300" y="358" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#7d5a00">1 total  ·  owned by RedisServer  ·  all threads share the same instance</text>
+  <!-- ── DataBase ── -->
+  <rect x="80" y="310" width="440" height="72" rx="8" fill="#271700" stroke="#d29922" stroke-width="1.5"/>
+  <text x="300" y="334" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="12" font-weight="600" fill="#e3b341">DataBase</text>
+  <text x="300" y="351" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" fill="#d29922">strings · lists · hashes · expiry  ·  std::mutex (every method locks)</text>
+  <text x="300" y="370" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#7d5a00">1 total · owned by RedisServer · all client threads share same instance · non-copyable</text>
 
   <!-- DataBase → persistence -->
-  <line x1="300" y1="368" x2="300" y2="438" stroke="#3a3a50" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrd)"/>
+  <line x1="300" y1="382" x2="300" y2="446" stroke="#3a3a50" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrd)"/>
+  <text x="312" y="418" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#3a3a50">dump / load</text>
 
-  <!-- ── Persistence (outside server) ── -->
-  <rect x="206" y="438" width="188" height="44" rx="8" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
-  <text x="300" y="456" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="10" font-weight="600" fill="#8b949e">dump.db</text>
-  <text x="300" y="473" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#484f58">load on start  ·  dump on shutdown</text>
+  <!-- ── Persistence (outside RedisServer) ── -->
+  <rect x="206" y="446" width="188" height="44" rx="8" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
+  <text x="300" y="464" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="10" font-weight="600" fill="#8b949e">dump.db</text>
+  <text x="300" y="481" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#484f58">load on start · detached thread dumps every 300s</text>
 
   <!-- ── Legend ── -->
-  <rect x="20" y="496" width="640" height="48" rx="8" fill="#080810"/>
-  <text x="40" y="512" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" font-weight="600" fill="#484f58">KEY</text>
-  <rect x="60" y="519" width="10" height="10" rx="2" fill="#0d2149" stroke="#1f6feb" stroke-width="1"/>
-  <text x="76" y="528" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#484f58">one per client thread</text>
-  <rect x="196" y="519" width="10" height="10" rx="2" fill="#271700" stroke="#d29922" stroke-width="1.5"/>
-  <text x="212" y="528" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#484f58">shared · 1 instance total</text>
-  <rect x="356" y="519" width="10" height="10" rx="2" fill="#080810" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="3 2"/>
-  <text x="372" y="528" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#484f58">ThreadPool boundary</text>
-  <line x1="490" y1="524" x2="510" y2="524" stroke="#3a3a50" stroke-width="1" stroke-dasharray="4 3"/>
-  <text x="516" y="528" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#484f58">indirect / persistence</text>
+  <rect x="20" y="506" width="640" height="44" rx="8" fill="#080810"/>
+  <text x="40" y="522" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" font-weight="600" fill="#484f58">KEY</text>
+  <rect x="62" y="529" width="10" height="10" rx="2" fill="#0d2149" stroke="#1f6feb" stroke-width="1"/>
+  <text x="78" y="538" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#484f58">one per client thread</text>
+  <rect x="212" y="529" width="10" height="10" rx="2" fill="#271700" stroke="#d29922" stroke-width="1.5"/>
+  <text x="228" y="538" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#484f58">shared · 1 instance total</text>
+  <rect x="382" y="529" width="10" height="10" rx="2" fill="#080810" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="3 2"/>
+  <text x="398" y="538" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#484f58">ThreadPool boundary</text>
+  <line x1="528" y1="534" x2="548" y2="534" stroke="#3a3a50" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="554" y="538" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="#484f58">persistence flow</text>
 </svg>
