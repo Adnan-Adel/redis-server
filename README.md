@@ -16,46 +16,13 @@ OK
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                      RedisServer                        │
-│         socket · bind · listen · accept loop            │
-│                                                         │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │                   ThreadPool                     │   │
-│  │     N worker threads (= CPU core count)          │   │
-│  │                                                  │   │
-│  │  ┌─────────────────────────────────────────┐    │   │
-│  │  │           ClientHandler                 │    │   │
-│  │  │   owns fd · read loop · send response   │    │   │
-│  │  │                                         │    │   │
-│  │  │  ┌──────────────┐  ┌────────────────┐  │    │   │
-│  │  │  │  RESPParser  │  │ CommandHandler │  │    │   │
-│  │  │  │ bytes→tokens │  │  dispatch·exec │  │    │   │
-│  │  │  └──────────────┘  └───────┬────────┘  │    │   │
-│  │  └───────────────────────────┼────────────┘    │   │
-│  └──────────────────────────────┼─────────────────┘   │
-│                                 │                       │
-│  ┌──────────────────────────────▼─────────────────┐    │
-│  │                   DataBase                      │    │
-│  │    strings · lists · hashes · expiry · mutex    │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
-```
+![Architecture Overview](architecture.svg)
 
-### Request lifecycle
+## Request Lifecycle
 
-```
-Client                 Server
-  │                      │
-  │── *3\r\n$3\r\nSET ──▶│  1. recv() into buffer
-  │                      │  2. RESPParser::feed() + tryParse()
-  │                      │     → ["SET", "foo", "bar"]
-  │                      │  3. CommandHandler::execute()
-  │                      │  4. DataBase::set("foo", "bar")
-  │◀──────── +OK\r\n ────│  5. sendResponse()
-  │                      │
-```
+![Request Flow](request_flow.svg)
+
+Every client command follows this path — raw TCP bytes in, RESP-encoded response out. The parser accumulates bytes across `recv()` calls to handle partial reads and pipelined commands correctly.
 
 ### Class responsibilities
 
