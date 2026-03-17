@@ -4,7 +4,7 @@ A Redis-compatible in-memory key-value database server built from scratch in C++
 
 ```
 redis-cli -p 6666
-127.0.0.1:6666> SET name "Adnan"
+127.0.0.1:6666> SET name Adnan
 OK
 127.0.0.1:6666> GET name
 "Adnan"
