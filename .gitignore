@@ -1,0 +1,6 @@
+# build artifacts
+bin/
+build/
+
+# database dump
+dumped.db

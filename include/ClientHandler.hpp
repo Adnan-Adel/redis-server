@@ -2,7 +2,7 @@
 
 #include <string>
 #include "CommandHandler.hpp"
-#include "../include/RESPParser.hpp"
+#include "RESPParser.hpp"
 
 class ClientHandler {
 public:
